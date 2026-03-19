@@ -74,7 +74,7 @@ async function buildAll() {
     ...sharedOptions,
     entryPoints: ["api/_entry.ts"],
     format: "cjs",
-    outfile: "api/index.js",
+    outfile: "api/index.cjs",
     external: [],
   });
 }
