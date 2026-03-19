@@ -1,10 +1,24 @@
-import { pgTable, text, integer, real, serial, date, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, integer, real, serial } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Daily health log - the core data model
+// Users with Google auth
+export const users = pgTable("users", {
+  id: text("id").primaryKey(),
+  googleId: text("google_id").notNull().unique(),
+  email: text("email").notNull(),
+  displayName: text("display_name").notNull(),
+  avatarUrl: text("avatar_url"),
+});
+
+export const insertUserSchema = createInsertSchema(users);
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
+// Daily health log - the core data model (now user-scoped)
 export const healthLogs = pgTable("health_logs", {
   id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
   date: text("date").notNull(), // YYYY-MM-DD
   // Sleep
   sleepHours: real("sleep_hours"),
@@ -34,26 +48,72 @@ export const insertHealthLogSchema = createInsertSchema(healthLogs).omit({ id: t
 export type InsertHealthLog = z.infer<typeof insertHealthLogSchema>;
 export type HealthLog = typeof healthLogs.$inferSelect;
 
-// Health goals
+// Health goals (now user-scoped)
 export const healthGoals = pgTable("health_goals", {
   id: serial("id").primaryKey(),
-  metric: text("metric").notNull(), // e.g. "steps", "water", "sleepHours"
+  userId: text("user_id").notNull(),
+  metric: text("metric").notNull(),
   target: real("target").notNull(),
   unit: text("unit").notNull(),
-  isActive: integer("is_active").notNull().default(1), // 1 or 0
+  isActive: integer("is_active").notNull().default(1),
 });
 
 export const insertHealthGoalSchema = createInsertSchema(healthGoals).omit({ id: true });
 export type InsertHealthGoal = z.infer<typeof insertHealthGoalSchema>;
 export type HealthGoal = typeof healthGoals.$inferSelect;
 
-// Keep the user table for template compatibility
-export const users = pgTable("users", {
+// Family groups
+export const familyGroups = pgTable("family_groups", {
   id: text("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  name: text("name").notNull(),
+  ownerId: text("owner_id").notNull(),
+  joinCode: text("join_code").notNull().unique(),
 });
 
-export const insertUserSchema = createInsertSchema(users).omit({ id: true });
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
+export const insertFamilyGroupSchema = createInsertSchema(familyGroups);
+export type InsertFamilyGroup = z.infer<typeof insertFamilyGroupSchema>;
+export type FamilyGroup = typeof familyGroups.$inferSelect;
+
+// Family members (junction table)
+export const familyMembers = pgTable("family_members", {
+  id: serial("id").primaryKey(),
+  groupId: text("group_id").notNull(),
+  userId: text("user_id").notNull(),
+  role: text("role").notNull().default("member"), // "owner" | "member"
+});
+
+export const insertFamilyMemberSchema = createInsertSchema(familyMembers).omit({ id: true });
+export type InsertFamilyMember = z.infer<typeof insertFamilyMemberSchema>;
+export type FamilyMember = typeof familyMembers.$inferSelect;
+
+// Sharing permissions - per metric, per user
+// Nothing shared by default. User explicitly enables each metric.
+export const sharingPermissions = pgTable("sharing_permissions", {
+  id: serial("id").primaryKey(),
+  userId: text("user_id").notNull(),
+  metric: text("metric").notNull(), // e.g. "sleepHours", "weight", "mood"
+  shared: integer("shared").notNull().default(0), // 0 = private, 1 = shared with family
+});
+
+export const insertSharingPermissionSchema = createInsertSchema(sharingPermissions).omit({ id: true });
+export type InsertSharingPermission = z.infer<typeof insertSharingPermissionSchema>;
+export type SharingPermission = typeof sharingPermissions.$inferSelect;
+
+// All possible shareable metrics
+export const SHAREABLE_METRICS = [
+  "sleepHours",
+  "sleepQuality",
+  "calories",
+  "protein",
+  "water",
+  "exerciseMinutes",
+  "exerciseType",
+  "steps",
+  "weight",
+  "heartRate",
+  "bloodPressureSystolic",
+  "bloodPressureDiastolic",
+  "mood",
+  "energyLevel",
+  "stressLevel",
+] as const;

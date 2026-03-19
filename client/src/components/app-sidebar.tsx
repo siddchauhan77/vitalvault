@@ -1,4 +1,5 @@
 import { Link, useLocation } from "wouter";
+import { useAuth } from "@/lib/auth";
 import {
   LayoutDashboard,
   PenSquare,
@@ -6,6 +7,10 @@ import {
   TrendingUp,
   Settings,
   Shield,
+  Users,
+  Share2,
+  Eye,
+  LogOut,
 } from "lucide-react";
 import {
   Sidebar,
@@ -20,8 +25,9 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { PerplexityAttribution } from "@/components/PerplexityAttribution";
+import { Button } from "@/components/ui/button";
 
-const navItems = [
+const mainNavItems = [
   { title: "Dashboard", href: "/", icon: LayoutDashboard },
   { title: "Log Entry", href: "/log", icon: PenSquare },
   { title: "Trends", href: "/trends", icon: TrendingUp },
@@ -29,8 +35,15 @@ const navItems = [
   { title: "Settings", href: "/settings", icon: Settings },
 ];
 
+const familyNavItems = [
+  { title: "Family Groups", href: "/family", icon: Users },
+  { title: "Sharing", href: "/sharing", icon: Share2 },
+  { title: "Family View", href: "/family-dashboard", icon: Eye },
+];
+
 export function AppSidebar() {
   const [location] = useLocation();
+  const { user, signOut } = useAuth();
 
   return (
     <Sidebar>
@@ -73,7 +86,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Navigate</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => (
+              {mainNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
@@ -92,22 +105,65 @@ export function AppSidebar() {
         </SidebarGroup>
 
         <SidebarGroup>
+          <SidebarGroupLabel>Family</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {familyNavItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    data-active={location === item.href}
+                    data-testid={`nav-${item.title.toLowerCase().replace(/\s+/g, "-")}`}
+                  >
+                    <Link href={item.href}>
+                      <item.icon className="w-4 h-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
           <SidebarGroupLabel>Privacy</SidebarGroupLabel>
           <SidebarGroupContent>
             <div className="px-3 py-2">
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Shield className="w-3.5 h-3.5 text-primary" />
-                <span>All data stored locally</span>
+                <span>Your data, your control</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">
-                Your health data never leaves your device. Export anytime.
+                Nothing is shared by default. You choose exactly what family members can see.
               </p>
             </div>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-3">
+      <SidebarFooter className="p-3 space-y-3">
+        {/* User info */}
+        {user && (
+          <div className="flex items-center gap-2 px-1">
+            <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-semibold shrink-0">
+              {user.displayName.charAt(0).toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium truncate">{user.displayName}</p>
+              <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0 w-7 h-7"
+              onClick={signOut}
+              data-testid="button-signout"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        )}
         <PerplexityAttribution />
       </SidebarFooter>
     </Sidebar>
