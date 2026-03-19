@@ -73,8 +73,8 @@ async function buildAll() {
   await esbuild({
     ...sharedOptions,
     entryPoints: ["api/_entry.ts"],
-    format: "cjs",
-    outfile: "api/index.cjs",
+    format: "esm",
+    outfile: "api/index.js",
     external: [],
   });
 }

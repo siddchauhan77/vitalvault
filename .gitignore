@@ -6,4 +6,3 @@ vite.config.ts.*
 *.tar.gz
 .vercel
 api/index.mjs
-api/index.js
