@@ -47,21 +47,35 @@ async function buildAll() {
   ];
   const externals = allDeps.filter((dep) => !allowlist.includes(dep));
 
-  await esbuild({
-    entryPoints: ["server/index.ts"],
-    platform: "node",
+  const sharedOptions = {
+    platform: "node" as const,
     bundle: true,
-    format: "cjs",
-    outfile: "dist/index.cjs",
+    minify: true,
+    logLevel: "info" as const,
     define: {
       "process.env.NODE_ENV": '"production"',
     },
     alias: {
       "@shared": path.resolve("shared"),
     },
-    minify: true,
+  };
+
+  await esbuild({
+    ...sharedOptions,
+    entryPoints: ["server/index.ts"],
+    format: "cjs",
+    outfile: "dist/index.cjs",
     external: externals,
-    logLevel: "info",
+  });
+
+  // Vercel serverless function — fully bundled, no external deps
+  console.log("building Vercel serverless function...");
+  await esbuild({
+    ...sharedOptions,
+    entryPoints: ["api/index.ts"],
+    format: "cjs",
+    outfile: "api/index.js",
+    external: [],
   });
 }
 
