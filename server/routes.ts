@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertHealthLogSchema, insertHealthGoalSchema } from "@shared/schema";
+import { insertHealthLogSchema, insertHealthGoalSchema } from "../shared/schema";
 import { randomUUID } from "crypto";
 
 // Simple in-memory session store (token -> userId)

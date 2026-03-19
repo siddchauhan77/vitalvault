@@ -6,7 +6,7 @@ import {
   type FamilyMember, type InsertFamilyMember,
   type SharingPermission, type InsertSharingPermission,
   SHAREABLE_METRICS,
-} from "@shared/schema";
+} from "../shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
